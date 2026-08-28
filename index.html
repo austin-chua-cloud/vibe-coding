@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workshop Operations Summit</title>
+<style>
+  :root {
+    --navy: #16233f;
+    --bg: #eef1f6;
+    --card-bg: #ffffff;
+    --border: #e2e5eb;
+    --text: #1c1f2a;
+    --muted: #6b7280;
+    --accent: #ea580c;
+    --accent-hover: #c2410c;
+    --blue: #2563eb;
+    --green: #16a34a;
+    --amber: #d97706;
+    --error: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  header {
+    background: var(--navy);
+    color: #fff;
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .brand { font-weight: 700; font-size: 1.05rem; }
+  .header-auth { font-size: 0.82rem; display: flex; align-items: center; gap: 10px; }
+  .header-auth .email { color: #b9c2d6; }
+  .btn-signout {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 0.78rem;
+    cursor: pointer;
+  }
+  .btn-signout:hover { background: rgba(255,255,255,0.18); }
+
+  main {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 40px 20px 60px;
+  }
+
+  .eyebrow {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  h1 { font-size: 1.9rem; margin: 6px 0 8px; }
+  .page-subtitle { color: var(--muted); font-size: 0.95rem; margin: 0 0 4px; }
+  .event-meta { color: var(--muted); font-size: 0.9rem; margin: 0 0 20px; }
+  .event-description { line-height: 1.6; margin-bottom: 28px; }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 22px;
+    margin-bottom: 20px;
+  }
+  .card h2 { font-size: 1rem; margin: 0 0 14px; }
+
+  .session-list { list-style: none; margin: 0; padding: 0; }
+  .session-list li {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.92rem;
+  }
+  .session-list li:last-child { border-bottom: none; }
+
+  button { font-family: inherit; cursor: pointer; }
+  .btn {
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 12px 20px;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-secondary { background: #fff; color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: #f5f6f8; }
+  .btn-danger { background: #fdecec; color: var(--error); }
+  .btn-danger:hover { background: #fbdada; }
+  .btn-block { width: 100%; }
+  .btn-large { font-size: 1rem; padding: 14px 24px; }
+
+  .link-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--accent);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .link-btn:hover { text-decoration: underline; }
+
+  .field { margin-bottom: 14px; }
+  label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; }
+  input[type="text"], input[type="password"], select {
+    width: 100%;
+    padding: 10px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.92rem;
+    background: #fff;
+    color: var(--text);
+  }
+  input[type="text"]:focus, input[type="password"]:focus, select:focus { outline: none; border-color: var(--accent); }
+  .field.has-error input, .field.has-error select { border-color: var(--error); }
+  .error-msg { color: var(--error); font-size: 0.78rem; margin-top: 4px; }
+  .form-note { font-size: 0.78rem; color: var(--muted); margin-top: 10px; }
+
+  .error-banner {
+    background: #fdecec;
+    color: var(--error);
+    border: 1px solid #f8caca;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    margin-bottom: 16px;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+  .status-registered .status-dot { background: var(--blue); }
+  .status-registered { color: var(--blue); }
+  .status-checked-in .status-dot { background: var(--green); }
+  .status-checked-in { color: var(--green); }
+  .status-waitlist .status-dot { background: var(--amber); }
+  .status-waitlist { color: var(--amber); }
+
+  .booking-row { margin-bottom: 8px; font-size: 0.95rem; }
+  .booking-label { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
+
+  .confirm-box {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    margin-top: 16px;
+  }
+  .confirm-actions { display: flex; gap: 8px; margin-top: 10px; }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.78rem;
+    padding: 20px;
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Event Operations</div>
+  <div id="header-auth" class="header-auth"></div>
+</header>
+
+<main>
+  <div id="global-error"></div>
+  <div id="view-landing"></div>
+  <div id="view-auth" hidden></div>
+  <div id="view-register" hidden></div>
+  <div id="view-my-registration" hidden></div>
+</main>
+
+<footer>Front-end prototype. Registration writes to a shared demo database.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+  const SUPABASE_URL = 'https://ogjiyzgimoopznhatszn.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_EwITo3YSQrpoCuGaCnsimw_-A2CbqzA';
+  const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const SESSIONS = [
+    "Keynote: The Future of Work",
+    "Workshop: Design Systems 101",
+    "Panel: Building in Public",
+    "Breakout: AI in Practice"
+  ];
+  const STATUS_LABELS = { registered: 'Registered', 'checked-in': 'Checked in', waitlist: 'Waitlist' };
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  let currentUser = null;
+  let myRegistration = null;
+  let currentView = 'landing';
+  let authFormMode = 'signin'; // 'signin' | 'signup' | 'forgot'
+  let passwordRecoveryPending = false;
+  let confirmingCancel = false;
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function showError(message) {
+    const el = document.getElementById('global-error');
+    el.innerHTML = message ? `<div class="error-banner">${escapeHtml(message)}</div>` : '';
+  }
+
+  function validate(name, email, session) {
+    const errors = {};
+    if (!name.trim()) errors.name = "Name is required.";
+    if (!email.trim()) errors.email = "Email is required.";
+    else if (!EMAIL_RE.test(email.trim())) errors.email = "Enter a valid email address.";
+    if (!session) errors.session = "Please select a session.";
+    return errors;
+  }
+
+  function showFormErrors(prefix, errors) {
+    ['name', 'email', 'session'].forEach(f => {
+      const field = document.getElementById(`${prefix}-field-${f}`);
+      const err = document.getElementById(`${prefix}-err-${f}`);
+      if (!field) return;
+      if (errors[f]) {
+        field.classList.add('has-error');
+        err.textContent = errors[f];
+        err.hidden = false;
+      } else {
+        field.classList.remove('has-error');
+        err.hidden = true;
+      }
+    });
+  }
+
+  function sessionOptionsHtml(selected) {
+    return SESSIONS.map(s => `<option value="${escapeHtml(s)}" ${s === selected ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('');
+  }
+
+  function statusBadge(status) {
+    return `<span class="status-badge status-${status}"><span class="status-dot"></span>${STATUS_LABELS[status]}</span>`;
+  }
+
+  async function fetchMyRegistration() {
+    const { data, error } = await db.from('attendees').select('*').order('created_at').limit(1);
+    if (error) throw error;
+    return data && data.length ? data[0] : null;
+  }
+
+  async function refreshMyRegistration() {
+    if (!currentUser) { myRegistration = null; return; }
+    try {
+      myRegistration = await fetchMyRegistration();
+      showError(null);
+    } catch (err) {
+      showError('Could not load your registration: ' + err.message);
+      myRegistration = null;
+    }
+  }
+
+  // ---- Navigation ----
+  const views = ['landing', 'auth', 'register', 'my-registration'];
+
+  function setView(view) {
+    currentView = view;
+    confirmingCancel = false;
+    views.forEach(v => {
+      document.getElementById(`view-${v}`).hidden = (v !== view);
+    });
+    renderCurrentView();
+  }
+
+  function renderCurrentView() {
+    if (currentView === 'landing') renderLanding();
+    else if (currentView === 'auth') renderAuth();
+    else if (currentView === 'register') renderRegister();
+    else if (currentView === 'my-registration') renderMyRegistration();
+  }
+
+  function updateHeaderAuthUI() {
+    const el = document.getElementById('header-auth');
+    if (currentUser) {
+      el.innerHTML = `
+        <span class="email">${escapeHtml(currentUser.email)}</span>
+        <button class="btn-signout" id="btn-signout">Sign out</button>
+      `;
+      document.getElementById('btn-signout').addEventListener('click', () => db.auth.signOut());
+    } else {
+      el.innerHTML = '';
+    }
+  }
+
+  function handleRegisterClick() {
+    if (!currentUser) { setView('auth'); return; }
+    if (myRegistration) { setView('my-registration'); return; }
+    setView('register');
+  }
+
+  // ---- Landing ----
+  function renderLanding() {
+    const root = document.getElementById('view-landing');
+    root.innerHTML = `
+      <div class="eyebrow">Workshop Operations</div>
+      <h1>Workshop Operations Summit</h1>
+      <p class="event-meta">March 12, 2027 · 9:00 AM–5:00 PM · Online</p>
+      <p class="event-description">
+        A one-day summit on running workshops and events well — from registration
+        and check-in to keeping everyone informed on event day. Pick a session below
+        and reserve your spot.
+      </p>
+      <div class="card">
+        <h2>Sessions</h2>
+        <ul class="session-list">
+          ${SESSIONS.map(s => `<li>${escapeHtml(s)}</li>`).join('')}
+        </ul>
+      </div>
+      <button class="btn btn-primary btn-large" id="btn-register">Register</button>
+    `;
+    document.getElementById('btn-register').addEventListener('click', handleRegisterClick);
+  }
+
+  // ---- Auth ----
+  function renderAuth() {
+    const root = document.getElementById('view-auth');
+
+    if (passwordRecoveryPending) {
+      root.innerHTML = `
+        <div class="eyebrow">Workshop Operations</div>
+        <h1>Choose a new password</h1>
+        <p class="page-subtitle">Set a new password for this account.</p>
+        <div class="card">
+          <form id="reset-form" novalidate>
+            <div class="field" id="rp-field-password">
+              <label>New password</label>
+              <input type="password" id="rp-password">
+              <div class="error-msg" id="rp-err-password" hidden></div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Set new password</button>
+          </form>
+          <div class="form-note" id="rp-status"></div>
+        </div>
+      `;
+      document.getElementById('reset-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const password = document.getElementById('rp-password').value;
+        const field = document.getElementById('rp-field-password');
+        const err = document.getElementById('rp-err-password');
+        const status = document.getElementById('rp-status');
+        if (password.length < 6) {
+          field.classList.add('has-error');
+          err.textContent = 'Password must be at least 6 characters.';
+          err.hidden = false;
+          return;
+        }
+        field.classList.remove('has-error');
+        err.hidden = true;
+        status.textContent = 'Saving…';
+        const { error } = await db.auth.updateUser({ password });
+        if (error) {
+          status.textContent = 'Could not update password: ' + error.message;
+          return;
+        }
+        passwordRecoveryPending = false;
+        await refreshMyRegistration();
+        setView(myRegistration ? 'my-registration' : 'register');
+      });
+      return;
+    }
+
+    if (authFormMode === 'forgot') {
+      root.innerHTML = `
+        <div class="eyebrow">Workshop Operations</div>
+        <h1>Reset password</h1>
+        <p class="page-subtitle">Enter your email to get a password reset link.</p>
+        <div class="card">
+          <form id="forgot-form" novalidate>
+            <div class="field" id="fp-field-email">
+              <label>Email</label>
+              <input type="text" id="fp-email" placeholder="you@example.com">
+              <div class="error-msg" id="fp-err-email" hidden></div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Send reset link</button>
+          </form>
+          <div class="form-note" id="fp-status"></div>
+          <div class="form-note"><button type="button" class="link-btn" id="fp-back">Back to sign in</button></div>
+        </div>
+      `;
+      document.getElementById('fp-back').addEventListener('click', () => {
+        authFormMode = 'signin';
+        renderAuth();
+      });
+      document.getElementById('forgot-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('fp-email').value.trim();
+        const field = document.getElementById('fp-field-email');
+        const err = document.getElementById('fp-err-email');
+        const status = document.getElementById('fp-status');
+        if (!EMAIL_RE.test(email)) {
+          field.classList.add('has-error');
+          err.textContent = 'Enter a valid email address.';
+          err.hidden = false;
+          return;
+        }
+        field.classList.remove('has-error');
+        err.hidden = true;
+        status.textContent = 'Sending…';
+        const { error } = await db.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.href.split('#')[0]
+        });
+        status.textContent = error
+          ? 'Could not send reset link: ' + error.message
+          : `Reset link sent to ${email}. Check your inbox and open it in this browser.`;
+      });
+      return;
+    }
+
+    const isSignup = authFormMode === 'signup';
+    root.innerHTML = `
+      <div class="eyebrow">Workshop Operations</div>
+      <h1>${isSignup ? 'Create account' : 'Sign in'}</h1>
+      <p class="page-subtitle">${isSignup ? 'Sign up with an email and a password to register.' : 'Sign in with your email and password to register.'}</p>
+      <div class="card">
+        <form id="auth-form" novalidate>
+          <div class="field" id="af-field-email">
+            <label>Email</label>
+            <input type="text" id="af-email" placeholder="you@example.com">
+            <div class="error-msg" id="af-err-email" hidden></div>
+          </div>
+          <div class="field" id="af-field-password">
+            <label>Password</label>
+            <input type="password" id="af-password">
+            <div class="error-msg" id="af-err-password" hidden></div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">${isSignup ? 'Sign up' : 'Sign in'}</button>
+        </form>
+        <div class="form-note" id="af-status"></div>
+        <div class="form-note">
+          ${isSignup
+            ? `Already have an account? <button type="button" class="link-btn" id="toggle-mode">Sign in</button>`
+            : `Don't have an account? <button type="button" class="link-btn" id="toggle-mode">Sign up</button>`}
+        </div>
+        ${isSignup ? '' : `<div class="form-note"><button type="button" class="link-btn" id="forgot-link">Forgot your password?</button></div>`}
+        <div class="form-note"><button type="button" class="link-btn" id="back-link">Back to event details</button></div>
+      </div>
+    `;
+
+    document.getElementById('toggle-mode').addEventListener('click', () => {
+      authFormMode = isSignup ? 'signin' : 'signup';
+      renderAuth();
+    });
+    document.getElementById('back-link').addEventListener('click', () => setView('landing'));
+    const forgotLink = document.getElementById('forgot-link');
+    if (forgotLink) {
+      forgotLink.addEventListener('click', () => {
+        authFormMode = 'forgot';
+        renderAuth();
+      });
+    }
+
+    document.getElementById('auth-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('af-email').value.trim();
+      const password = document.getElementById('af-password').value;
+      const emailField = document.getElementById('af-field-email');
+      const emailErr = document.getElementById('af-err-email');
+      const passwordField = document.getElementById('af-field-password');
+      const passwordErr = document.getElementById('af-err-password');
+      const status = document.getElementById('af-status');
+
+      let hasError = false;
+      if (!EMAIL_RE.test(email)) {
+        emailField.classList.add('has-error');
+        emailErr.textContent = 'Enter a valid email address.';
+        emailErr.hidden = false;
+        hasError = true;
+      } else {
+        emailField.classList.remove('has-error');
+        emailErr.hidden = true;
+      }
+      if (password.length < 6) {
+        passwordField.classList.add('has-error');
+        passwordErr.textContent = 'Password must be at least 6 characters.';
+        passwordErr.hidden = false;
+        hasError = true;
+      } else {
+        passwordField.classList.remove('has-error');
+        passwordErr.hidden = true;
+      }
+      if (hasError) return;
+
+      status.textContent = isSignup ? 'Creating account…' : 'Signing in…';
+      if (isSignup) {
+        const { data, error } = await db.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: window.location.href.split('#')[0] }
+        });
+        if (error) {
+          status.textContent = 'Could not sign up: ' + error.message;
+        } else if (!data.session) {
+          status.textContent = 'Account created. Check your email to confirm it before signing in.';
+        }
+      } else {
+        const { error } = await db.auth.signInWithPassword({ email, password });
+        if (error) status.textContent = 'Could not sign in: ' + error.message;
+      }
+    });
+  }
+
+  // ---- Register ----
+  function renderRegister() {
+    const root = document.getElementById('view-register');
+    root.innerHTML = `
+      <div class="eyebrow">Workshop Operations</div>
+      <h1>Register</h1>
+      <p class="page-subtitle">Choose a session for the Workshop Operations Summit.</p>
+      <div class="card">
+        <form id="reg-form" novalidate>
+          <div class="field" id="rg-field-name">
+            <label>Name</label>
+            <input type="text" id="rg-name">
+            <div class="error-msg" id="rg-err-name" hidden></div>
+          </div>
+          <div class="field" id="rg-field-email">
+            <label>Email</label>
+            <input type="text" id="rg-email" value="${escapeHtml(currentUser ? currentUser.email : '')}">
+            <div class="error-msg" id="rg-err-email" hidden></div>
+          </div>
+          <div class="field" id="rg-field-session">
+            <label>Session</label>
+            <select id="rg-session">
+              <option value="" disabled selected>Select a session…</option>
+              ${sessionOptionsHtml('')}
+            </select>
+            <div class="error-msg" id="rg-err-session" hidden></div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Confirm registration</button>
+        </form>
+      </div>
+    `;
+
+    document.getElementById('reg-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('rg-name').value;
+      const email = document.getElementById('rg-email').value;
+      const session = document.getElementById('rg-session').value;
+      const errors = validate(name, email, session);
+      showFormErrors('rg', errors);
+      if (Object.keys(errors).length) return;
+
+      try {
+        const { error } = await db.from('attendees').insert({
+          name: name.trim(),
+          email: email.trim(),
+          session
+        });
+        if (error) throw error;
+        showError(null);
+      } catch (err) {
+        showError('Could not register: ' + err.message);
+        return;
+      }
+      await refreshMyRegistration();
+      setView('my-registration');
+    });
+  }
+
+  // ---- My Registration ----
+  function renderMyRegistration() {
+    const root = document.getElementById('view-my-registration');
+
+    if (!myRegistration) {
+      root.innerHTML = `
+        <div class="eyebrow">Workshop Operations</div>
+        <h1>My registration</h1>
+        <div class="card">
+          <p class="form-note">You don't have a registration yet.</p>
+          <button class="btn btn-primary" id="btn-go-register">Register now</button>
+        </div>
+      `;
+      document.getElementById('btn-go-register').addEventListener('click', () => setView('register'));
+      return;
+    }
+
+    const a = myRegistration;
+    root.innerHTML = `
+      <div class="eyebrow">Workshop Operations</div>
+      <h1>My registration</h1>
+      <div class="card">
+        <div class="booking-row"><div class="booking-label">Name</div>${escapeHtml(a.name)}</div>
+        <div class="booking-row"><div class="booking-label">Email</div>${escapeHtml(a.email)}</div>
+        <div class="booking-row"><div class="booking-label">Session</div>${escapeHtml(a.session)}</div>
+        <div class="booking-row"><div class="booking-label">Status</div>${statusBadge(a.status)}</div>
+        ${confirmingCancel ? `
+          <div class="confirm-box">
+            <div>Cancel this registration? This can't be undone.</div>
+            <div class="confirm-actions">
+              <button class="btn btn-danger" id="btn-confirm-cancel">Cancel registration</button>
+              <button class="btn btn-secondary" id="btn-keep">Keep registration</button>
+            </div>
+          </div>
+        ` : `
+          <div style="margin-top:16px;">
+            <button class="btn btn-secondary" id="btn-cancel-reg">Cancel registration</button>
+          </div>
+        `}
+      </div>
+    `;
+
+    if (confirmingCancel) {
+      document.getElementById('btn-confirm-cancel').addEventListener('click', async () => {
+        try {
+          const { error } = await db.from('attendees').delete().eq('id', a.id);
+          if (error) throw error;
+          showError(null);
+        } catch (err) {
+          showError('Could not cancel registration: ' + err.message);
+          return;
+        }
+        confirmingCancel = false;
+        await refreshMyRegistration();
+        setView('landing');
+      });
+      document.getElementById('btn-keep').addEventListener('click', () => {
+        confirmingCancel = false;
+        renderMyRegistration();
+      });
+    } else {
+      document.getElementById('btn-cancel-reg').addEventListener('click', () => {
+        confirmingCancel = true;
+        renderMyRegistration();
+      });
+    }
+  }
+
+  // ---- Init ----
+  db.auth.onAuthStateChange(async (event, session) => {
+    currentUser = session ? session.user : null;
+    updateHeaderAuthUI();
+
+    if ((event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') && window.location.hash) {
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+
+    if (event === 'PASSWORD_RECOVERY') {
+      passwordRecoveryPending = true;
+      setView('auth');
+      return;
+    }
+
+    if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+      if (passwordRecoveryPending) return;
+      if (currentUser) {
+        await refreshMyRegistration();
+        if (myRegistration) setView('my-registration');
+        else if (currentView === 'auth') setView('register');
+        else setView('landing');
+      } else {
+        setView('landing');
+      }
+    } else if (event === 'SIGNED_OUT') {
+      myRegistration = null;
+      setView('landing');
+    }
+  });
+</script>
+</body>
+</html>
