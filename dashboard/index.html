@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Event Operations</title>
+<style>
+  :root {
+    --sidebar-bg: #16233f;
+    --sidebar-text: #b9c2d6;
+    --bg: #eef1f6;
+    --card-bg: #ffffff;
+    --border: #e2e5eb;
+    --text: #1c1f2a;
+    --muted: #6b7280;
+    --accent: #ea580c;
+    --accent-hover: #c2410c;
+    --blue: #2563eb;
+    --green: #16a34a;
+    --amber: #d97706;
+    --error: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .app {
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    background: var(--sidebar-bg);
+    color: var(--sidebar-text);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 16px;
+  }
+  .sidebar-title {
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.05rem;
+  }
+  .sidebar-subtitle {
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #8a93ad;
+    margin-top: 2px;
+    margin-bottom: 20px;
+  }
+  .nav-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    color: var(--sidebar-text);
+    font-size: 0.9rem;
+    padding: 10px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-bottom: 4px;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.06); }
+  .nav-item[hidden] { display: none; }
+  .nav-item.active {
+    background: #fff;
+    color: var(--sidebar-bg);
+    font-weight: 600;
+  }
+  .sidebar-footer {
+    margin-top: auto;
+    font-size: 0.72rem;
+    color: #6b7690;
+    line-height: 1.4;
+  }
+  .sidebar-auth {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-size: 0.78rem;
+  }
+  .sidebar-auth .signed-in-email {
+    color: #fff;
+    font-weight: 600;
+    margin-bottom: 8px;
+    word-break: break-all;
+  }
+  .btn-signout {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 0.78rem;
+    cursor: pointer;
+  }
+  .btn-signout:hover { background: rgba(255,255,255,0.18); }
+
+  /* Main */
+  .main {
+    flex: 1;
+    padding: 28px 32px 60px;
+    min-width: 0;
+  }
+  .eyebrow {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .page-title {
+    font-size: 1.5rem;
+    margin: 2px 0 4px;
+  }
+  .page-subtitle {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin: 0;
+  }
+  .header-actions { display: flex; gap: 10px; }
+
+  button { font-family: inherit; cursor: pointer; }
+  .btn {
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 9px 14px;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-secondary { background: #fff; color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: #f5f6f8; }
+  .btn-small { padding: 6px 10px; font-size: 0.78rem; border-radius: 6px; border: none; }
+  .btn-edit { background: #eef0f3; color: var(--text); }
+  .btn-edit:hover { background: #dfe2e6; }
+  .btn-danger { background: #fdecec; color: var(--error); }
+  .btn-danger:hover { background: #fbdada; }
+  .btn-checkin { background: #e8f7ee; color: var(--green); }
+  .btn-checkin:hover { background: #d5f1e0; }
+  .btn-block { width: 100%; }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+  }
+
+  /* Stat cards */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .stat-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .stat-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--sidebar-bg);
+  }
+  .stat-note {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* Dashboard layout */
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+
+  /* Filter pills */
+  .filter-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .pill {
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--text);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 0.78rem;
+  }
+  .pill.active {
+    background: var(--sidebar-bg);
+    color: #fff;
+    border-color: var(--sidebar-bg);
+  }
+
+  .card-heading-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .card-heading-row h2 { font-size: 1rem; margin: 0; }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    text-align: left;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0 8px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody td {
+    padding: 12px 8px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.88rem;
+    vertical-align: middle;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  .cell-name { font-weight: 600; }
+  .cell-email { color: var(--muted); font-size: 0.8rem; }
+  .actions-cell { display: flex; gap: 6px; }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+  .status-registered .status-dot { background: var(--blue); }
+  .status-registered { color: var(--blue); }
+  .status-checked-in .status-dot { background: var(--green); }
+  .status-checked-in { color: var(--green); }
+  .status-waitlist .status-dot { background: var(--amber); }
+  .status-waitlist { color: var(--amber); }
+
+  .empty-state { text-align: center; color: var(--muted); padding: 32px 0; font-size: 0.9rem; }
+
+  /* Forms */
+  .field { margin-bottom: 14px; }
+  label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; }
+  input[type="text"], input[type="password"], select {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    background: #fff;
+    color: var(--text);
+  }
+  input[type="text"]:focus, input[type="password"]:focus, select:focus { outline: none; border-color: var(--accent); }
+  .link-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--accent);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .link-btn:hover { text-decoration: underline; }
+  .field.has-error input, .field.has-error select { border-color: var(--error); }
+  .error-msg { color: var(--error); font-size: 0.76rem; margin-top: 4px; }
+  .form-note { font-size: 0.75rem; color: var(--muted); margin-top: 10px; }
+  .form-card { max-width: 420px; }
+
+  .edit-form .field { margin-bottom: 10px; }
+  .edit-actions { display: flex; gap: 8px; margin-top: 10px; }
+
+  .error-banner {
+    background: #fdecec;
+    color: var(--error);
+    border: 1px solid #f8caca;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    margin-bottom: 16px;
+  }
+  .loading-state { text-align: center; color: var(--muted); padding: 60px 0; font-size: 0.9rem; }
+
+  @media (max-width: 900px) {
+    .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .dashboard-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 700px) {
+    .app { flex-direction: column; }
+    .sidebar {
+      width: 100%;
+      flex-direction: row;
+      align-items: center;
+      flex-wrap: wrap;
+      padding: 14px 16px;
+    }
+    .sidebar-title, .sidebar-subtitle { display: none; }
+    .nav-item { width: auto; margin-bottom: 0; }
+    .sidebar-footer { display: none; }
+    .main { padding: 20px 16px 40px; }
+    .stat-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 480px) {
+    table, thead, tbody, tr, td { display: block; }
+    thead { display: none; }
+    tbody tr {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 10px;
+      padding: 10px 12px;
+    }
+    tbody td { border: none; padding: 4px 0; }
+    .actions-cell { padding-top: 8px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="sidebar">
+    <div class="sidebar-title">Event Operations</div>
+    <div class="sidebar-subtitle">Prototype</div>
+    <button class="nav-item" data-view="dashboard">Dashboard</button>
+    <button class="nav-item" data-view="attendees">Attendees</button>
+    <button class="nav-item" data-view="registration">Registration</button>
+    <button class="nav-item" data-view="eventday">Event day</button>
+    <div id="sidebar-auth" class="sidebar-auth"></div>
+    <div class="sidebar-footer">Front-end prototype.<br>Sign in required. Roles (admin/user) are coming later — everyone signed in has full access for now.</div>
+  </div>
+
+  <div class="main">
+    <div id="global-error"></div>
+    <div id="view-dashboard" hidden></div>
+    <div id="view-attendees" hidden></div>
+    <div id="view-registration" hidden></div>
+    <div id="view-eventday" hidden></div>
+    <div id="view-signin" hidden></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+  const SUPABASE_URL = 'https://ogjiyzgimoopznhatszn.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_EwITo3YSQrpoCuGaCnsimw_-A2CbqzA';
+  const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const CAPACITY = 60;
+  const SESSIONS = [
+    "Keynote: The Future of Work",
+    "Workshop: Design Systems 101",
+    "Panel: Building in Public",
+    "Breakout: AI in Practice"
+  ];
+  const STATUS_LABELS = { registered: 'Registered', 'checked-in': 'Checked in', waitlist: 'Waitlist' };
+
+  function showError(message) {
+    const el = document.getElementById('global-error');
+    el.innerHTML = message ? `<div class="error-banner">${escapeHtml(message)}</div>` : '';
+  }
+
+  async function fetchAttendees() {
+    const { data, error } = await db.from('attendees').select('*').order('created_at');
+    if (error) throw error;
+    return data;
+  }
+
+  let attendees = [];
+  let currentView = 'registration';
+  let dashboardFilter = 'all';
+  let attendeesFilter = 'all';
+  let editingId = null;
+  let confirmDeleteId = null;
+  let currentUser = null;
+  let authFormMode = 'signin'; // 'signin' | 'signup' | 'forgot'
+  let passwordRecoveryPending = false;
+  const AUTH_REQUIRED_VIEWS = ['dashboard', 'attendees', 'registration', 'eventday'];
+
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  function validate(name, email, session) {
+    const errors = {};
+    if (!name.trim()) errors.name = "Name is required.";
+    if (!email.trim()) errors.email = "Email is required.";
+    else if (!EMAIL_RE.test(email.trim())) errors.email = "Enter a valid email address.";
+    if (!session) errors.session = "Please select a session.";
+    return errors;
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+  function escapeAttr(str) { return escapeHtml(str).replace(/"/g, '&quot;'); }
+
+  async function addAttendee(name, email, session, status = 'registered') {
+    // No .select() here: an anonymous registrant can INSERT but has no SELECT
+    // grant, and RETURNING a row requires read access to it under RLS.
+    const { error } = await db
+      .from('attendees')
+      .insert({ name: name.trim(), email: email.trim(), session, status });
+    if (error) throw error;
+  }
+  async function updateAttendee(id, fields) {
+    const { data, error } = await db.from('attendees').update(fields).eq('id', id).select().single();
+    if (error) throw error;
+    const a = attendees.find(x => x.id === id);
+    Object.assign(a, data);
+  }
+  async function deleteAttendee(id) {
+    const { error } = await db.from('attendees').delete().eq('id', id);
+    if (error) throw error;
+    attendees = attendees.filter(x => x.id !== id);
+  }
+
+  function statusBadge(status) {
+    return `<span class="status-badge status-${status}"><span class="status-dot"></span>${STATUS_LABELS[status]}</span>`;
+  }
+
+  function sessionOptionsHtml(selected) {
+    return SESSIONS.map(s => `<option value="${escapeAttr(s)}" ${s === selected ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('');
+  }
+
+  function statusOptionsHtml(selected) {
+    return Object.keys(STATUS_LABELS).map(s => `<option value="${s}" ${s === selected ? 'selected' : ''}>${STATUS_LABELS[s]}</option>`).join('');
+  }
+
+  function exportCsv() {
+    const header = ['Name', 'Email', 'Session', 'Status'];
+    const rows = attendees.map(a => [a.name, a.email, a.session, STATUS_LABELS[a.status]]);
+    const csv = [header, ...rows]
+      .map(row => row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'attendees.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  // ---- Navigation ----
+  const views = ['dashboard', 'attendees', 'registration', 'eventday', 'signin'];
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.addEventListener('click', () => setView(btn.dataset.view));
+  });
+
+  async function setView(view) {
+    if (AUTH_REQUIRED_VIEWS.includes(view) && !currentUser) view = 'signin';
+    if (view === 'signin' && !passwordRecoveryPending) authFormMode = 'signin';
+
+    currentView = view;
+    editingId = null;
+    confirmDeleteId = null;
+    views.forEach(v => {
+      document.getElementById(`view-${v}`).hidden = (v !== view);
+    });
+    document.querySelectorAll('.nav-item').forEach(btn => {
+      btn.hidden = !currentUser;
+      btn.classList.toggle('active', btn.dataset.view === view);
+    });
+
+    if (view === 'dashboard' || view === 'attendees' || view === 'eventday') {
+      document.getElementById(`view-${view}`).innerHTML = '<div class="loading-state">Loading attendees…</div>';
+      try {
+        attendees = await fetchAttendees();
+        showError(null);
+      } catch (err) {
+        showError('Could not load attendees: ' + err.message);
+        attendees = [];
+      }
+    }
+    renderCurrentView();
+  }
+
+  function renderCurrentView() {
+    if (currentView === 'dashboard') renderDashboard();
+    else if (currentView === 'attendees') renderAttendees();
+    else if (currentView === 'registration') renderRegistration();
+    else if (currentView === 'eventday') renderEventDay();
+    else if (currentView === 'signin') renderSignIn();
+  }
+
+  // ---- Auth ----
+  function updateSidebarAuthUI() {
+    const el = document.getElementById('sidebar-auth');
+    if (currentUser) {
+      el.innerHTML = `
+        <div class="signed-in-email">${escapeHtml(currentUser.email)}</div>
+        <button class="btn-signout" id="btn-signout">Sign out</button>
+      `;
+      document.getElementById('btn-signout').addEventListener('click', () => db.auth.signOut());
+    } else {
+      el.innerHTML = '';
+    }
+  }
+
+  function renderSignIn() {
+    const root = document.getElementById('view-signin');
+
+    if (passwordRecoveryPending) {
+      root.innerHTML = `
+        <div class="page-header">
+          <div>
+            <div class="eyebrow">Workshop Operations</div>
+            <h1 class="page-title">Choose a new password</h1>
+            <p class="page-subtitle">Set a new password for this account.</p>
+          </div>
+        </div>
+        <div class="card form-card">
+          <form id="reset-form" novalidate>
+            <div class="field" id="rp-field-password">
+              <label>New password</label>
+              <input type="password" id="rp-password">
+              <div class="error-msg" id="rp-err-password" hidden></div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Set new password</button>
+          </form>
+          <div class="form-note" id="rp-status"></div>
+        </div>
+      `;
+
+      document.getElementById('reset-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const password = document.getElementById('rp-password').value;
+        const field = document.getElementById('rp-field-password');
+        const err = document.getElementById('rp-err-password');
+        const status = document.getElementById('rp-status');
+
+        if (password.length < 6) {
+          field.classList.add('has-error');
+          err.textContent = 'Password must be at least 6 characters.';
+          err.hidden = false;
+          return;
+        }
+        field.classList.remove('has-error');
+        err.hidden = true;
+
+        status.textContent = 'Saving…';
+        const { error } = await db.auth.updateUser({ password });
+        if (error) {
+          status.textContent = 'Could not update password: ' + error.message;
+          return;
+        }
+        passwordRecoveryPending = false;
+        setView('dashboard');
+      });
+      return;
+    }
+
+    if (authFormMode === 'forgot') {
+      root.innerHTML = `
+        <div class="page-header">
+          <div>
+            <div class="eyebrow">Workshop Operations</div>
+            <h1 class="page-title">Reset password</h1>
+            <p class="page-subtitle">Enter your email to get a password reset link.</p>
+          </div>
+        </div>
+        <div class="card form-card">
+          <form id="forgot-form" novalidate>
+            <div class="field" id="fp-field-email">
+              <label>Email</label>
+              <input type="text" id="fp-email" placeholder="you@example.com">
+              <div class="error-msg" id="fp-err-email" hidden></div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Send reset link</button>
+          </form>
+          <div class="form-note" id="fp-status"></div>
+          <div class="form-note"><button type="button" class="link-btn" id="fp-back">Back to sign in</button></div>
+        </div>
+      `;
+
+      document.getElementById('fp-back').addEventListener('click', () => {
+        authFormMode = 'signin';
+        renderSignIn();
+      });
+
+      document.getElementById('forgot-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('fp-email').value.trim();
+        const field = document.getElementById('fp-field-email');
+        const err = document.getElementById('fp-err-email');
+        const status = document.getElementById('fp-status');
+
+        if (!EMAIL_RE.test(email)) {
+          field.classList.add('has-error');
+          err.textContent = 'Enter a valid email address.';
+          err.hidden = false;
+          return;
+        }
+        field.classList.remove('has-error');
+        err.hidden = true;
+
+        status.textContent = 'Sending…';
+        const { error } = await db.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.href.split('#')[0]
+        });
+        status.textContent = error
+          ? 'Could not send reset link: ' + error.message
+          : `Reset link sent to ${email}. Check your inbox and open it in this browser.`;
+      });
+      return;
+    }
+
+    const isSignup = authFormMode === 'signup';
+    root.innerHTML = `
+      <div class="page-header">
+        <div>
+          <div class="eyebrow">Workshop Operations</div>
+          <h1 class="page-title">${isSignup ? 'Create account' : 'Sign in'}</h1>
+          <p class="page-subtitle">${isSignup ? 'Sign up with an email and a password.' : 'Sign in with your email and password.'}</p>
+        </div>
+      </div>
+      <div class="card form-card">
+        <form id="auth-form" novalidate>
+          <div class="field" id="af-field-email">
+            <label>Email</label>
+            <input type="text" id="af-email" placeholder="you@example.com">
+            <div class="error-msg" id="af-err-email" hidden></div>
+          </div>
+          <div class="field" id="af-field-password">
+            <label>Password</label>
+            <input type="password" id="af-password">
+            <div class="error-msg" id="af-err-password" hidden></div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">${isSignup ? 'Sign up' : 'Sign in'}</button>
+        </form>
+        <div class="form-note" id="af-status"></div>
+        <div class="form-note">
+          ${isSignup
+            ? `Already have an account? <button type="button" class="link-btn" id="toggle-mode">Sign in</button>`
+            : `Don't have an account? <button type="button" class="link-btn" id="toggle-mode">Sign up</button>`}
+        </div>
+        ${isSignup ? '' : `<div class="form-note"><button type="button" class="link-btn" id="forgot-link">Forgot your password?</button></div>`}
+      </div>
+    `;
+
+    document.getElementById('toggle-mode').addEventListener('click', () => {
+      authFormMode = isSignup ? 'signin' : 'signup';
+      renderSignIn();
+    });
+    const forgotLink = document.getElementById('forgot-link');
+    if (forgotLink) {
+      forgotLink.addEventListener('click', () => {
+        authFormMode = 'forgot';
+        renderSignIn();
+      });
+    }
+
+    document.getElementById('auth-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('af-email').value.trim();
+      const password = document.getElementById('af-password').value;
+      const emailField = document.getElementById('af-field-email');
+      const emailErr = document.getElementById('af-err-email');
+      const passwordField = document.getElementById('af-field-password');
+      const passwordErr = document.getElementById('af-err-password');
+      const status = document.getElementById('af-status');
+
+      let hasError = false;
+      if (!EMAIL_RE.test(email)) {
+        emailField.classList.add('has-error');
+        emailErr.textContent = 'Enter a valid email address.';
+        emailErr.hidden = false;
+        hasError = true;
+      } else {
+        emailField.classList.remove('has-error');
+        emailErr.hidden = true;
+      }
+      if (password.length < 6) {
+        passwordField.classList.add('has-error');
+        passwordErr.textContent = 'Password must be at least 6 characters.';
+        passwordErr.hidden = false;
+        hasError = true;
+      } else {
+        passwordField.classList.remove('has-error');
+        passwordErr.hidden = true;
+      }
+      if (hasError) return;
+
+      status.textContent = isSignup ? 'Creating account…' : 'Signing in…';
+      if (isSignup) {
+        const { data, error } = await db.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: window.location.href.split('#')[0] }
+        });
+        if (error) {
+          status.textContent = 'Could not sign up: ' + error.message;
+        } else if (!data.session) {
+          status.textContent = 'Account created. Check your email to confirm it before signing in.';
+        }
+        // If email confirmation is off, signUp starts a session and onAuthStateChange handles navigation.
+      } else {
+        const { error } = await db.auth.signInWithPassword({ email, password });
+        if (error) status.textContent = 'Could not sign in: ' + error.message;
+      }
+    });
+  }
+
+  // ---- Dashboard ----
+  function renderDashboard() {
+    const root = document.getElementById('view-dashboard');
+    const total = attendees.length;
+    const checkedIn = attendees.filter(a => a.status === 'checked-in').length;
+    const waitlist = attendees.filter(a => a.status === 'waitlist').length;
+    const usedSessions = new Set(attendees.map(a => a.session)).size;
+    const checkedInPct = total ? Math.round((checkedIn / total) * 100) : 0;
+
+    root.innerHTML = `
+      <div class="page-header">
+        <div>
+          <div class="eyebrow">Workshop Operations</div>
+          <h1 class="page-title">Event dashboard</h1>
+          <p class="page-subtitle">Manage registrations, status and event-day readiness.</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-secondary" id="btn-export">Export list</button>
+          <button class="btn btn-primary" id="btn-goto-registration">+ Add attendee</button>
+        </div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="card">
+          <div class="stat-label">Total registrations</div>
+          <div class="stat-value">${total}</div>
+          <div class="stat-note">Capacity ${CAPACITY}</div>
+        </div>
+        <div class="card">
+          <div class="stat-label">Checked in</div>
+          <div class="stat-value">${checkedIn}</div>
+          <div class="stat-note">${checkedInPct}% of registrations</div>
+        </div>
+        <div class="card">
+          <div class="stat-label">Waitlist</div>
+          <div class="stat-value">${waitlist}</div>
+          <div class="stat-note">Review before event day</div>
+        </div>
+        <div class="card">
+          <div class="stat-label">Sessions</div>
+          <div class="stat-value">${usedSessions} / ${SESSIONS.length}</div>
+          <div class="stat-note">Sessions with registrants</div>
+        </div>
+      </div>
+
+      <div class="dashboard-grid">
+        <div class="card">
+          <div class="card-heading-row">
+            <h2>Attendees</h2>
+            <div class="filter-row" id="dashboard-filters">
+              ${['all', 'registered', 'checked-in', 'waitlist'].map(f => `
+                <button class="pill ${dashboardFilter === f ? 'active' : ''}" data-filter="${f}">
+                  ${f === 'all' ? 'All' : STATUS_LABELS[f]}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+          <div id="dashboard-table"></div>
+        </div>
+
+        <div class="card">
+          <h2 style="font-size:1rem;margin:0 0 14px;">Quick registration</h2>
+          <form id="quick-form" novalidate>
+            <div class="field" id="qf-field-name">
+              <label>Name</label>
+              <input type="text" id="qf-name">
+              <div class="error-msg" id="qf-err-name" hidden></div>
+            </div>
+            <div class="field" id="qf-field-email">
+              <label>Email</label>
+              <input type="text" id="qf-email">
+              <div class="error-msg" id="qf-err-email" hidden></div>
+            </div>
+            <div class="field" id="qf-field-session">
+              <label>Session</label>
+              <select id="qf-session">
+                <option value="" disabled selected>Select a session…</option>
+                ${sessionOptionsHtml('')}
+              </select>
+              <div class="error-msg" id="qf-err-session" hidden></div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Add attendee</button>
+          </form>
+          <div class="form-note">Prototype uses dummy data only.</div>
+        </div>
+      </div>
+    `;
+
+    renderDashboardTable();
+
+    document.getElementById('btn-export').addEventListener('click', exportCsv);
+    document.getElementById('btn-goto-registration').addEventListener('click', () => setView('registration'));
+
+    document.getElementById('dashboard-filters').addEventListener('click', (e) => {
+      const btn = e.target.closest('.pill');
+      if (!btn) return;
+      dashboardFilter = btn.dataset.filter;
+      document.querySelectorAll('#dashboard-filters .pill').forEach(p => {
+        p.classList.toggle('active', p.dataset.filter === dashboardFilter);
+      });
+      renderDashboardTable();
+    });
+
+    document.getElementById('quick-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('qf-name').value;
+      const email = document.getElementById('qf-email').value;
+      const session = document.getElementById('qf-session').value;
+      const errors = validate(name, email, session);
+      showFormErrors('qf', errors);
+      if (Object.keys(errors).length) return;
+      try {
+        await addAttendee(name, email, session);
+        attendees = await fetchAttendees();
+        showError(null);
+      } catch (err) {
+        showError('Could not add attendee: ' + err.message);
+        return;
+      }
+      e.target.reset();
+      document.getElementById('qf-session').selectedIndex = 0;
+      showFormErrors('qf', {});
+      renderDashboardStatsAndTable();
+    });
+  }
+
+  function renderDashboardStatsAndTable() {
+    // Re-render stats + table without wiping the quick-registration form's current input.
+    const total = attendees.length;
+    const checkedIn = attendees.filter(a => a.status === 'checked-in').length;
+    const waitlist = attendees.filter(a => a.status === 'waitlist').length;
+    const usedSessions = new Set(attendees.map(a => a.session)).size;
+    const checkedInPct = total ? Math.round((checkedIn / total) * 100) : 0;
+    const statCards = document.querySelectorAll('.stat-grid .stat-value');
+    statCards[0].textContent = total;
+    statCards[1].textContent = checkedIn;
+    statCards[2].textContent = waitlist;
+    statCards[3].textContent = `${usedSessions} / ${SESSIONS.length}`;
+    document.querySelectorAll('.stat-grid .stat-note')[1].textContent = `${checkedInPct}% of registrations`;
+    renderDashboardTable();
+  }
+
+  function renderDashboardTable() {
+    const container = document.getElementById('dashboard-table');
+    const filtered = dashboardFilter === 'all' ? attendees : attendees.filter(a => a.status === dashboardFilter);
+    if (!filtered.length) {
+      container.innerHTML = `<div class="empty-state">No attendees match this filter.</div>`;
+      return;
+    }
+    container.innerHTML = `
+      <table>
+        <thead><tr><th>Attendee</th><th>Session</th><th>Status</th></tr></thead>
+        <tbody>
+          ${filtered.map(a => `
+            <tr>
+              <td><div class="cell-name">${escapeHtml(a.name)}</div><div class="cell-email">${escapeHtml(a.email)}</div></td>
+              <td>${escapeHtml(a.session)}</td>
+              <td>${statusBadge(a.status)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  function showFormErrors(prefix, errors) {
+    ['name', 'email', 'session'].forEach(f => {
+      const field = document.getElementById(`${prefix}-field-${f}`);
+      const err = document.getElementById(`${prefix}-err-${f}`);
+      if (errors[f]) {
+        field.classList.add('has-error');
+        err.textContent = errors[f];
+        err.hidden = false;
+      } else {
+        field.classList.remove('has-error');
+        err.hidden = true;
+      }
+    });
+  }
+
+  // ---- Registration page ----
+  function renderRegistration() {
+    const root = document.getElementById('view-registration');
+    root.innerHTML = `
+      <div class="page-header">
+        <div>
+          <div class="eyebrow">Workshop Operations</div>
+          <h1 class="page-title">Registration</h1>
+          <p class="page-subtitle">Register a new attendee for the event.</p>
+        </div>
+      </div>
+      <div class="card form-card">
+        <form id="reg-form" novalidate>
+          <div class="field" id="rf-field-name">
+            <label>Name</label>
+            <input type="text" id="rf-name">
+            <div class="error-msg" id="rf-err-name" hidden></div>
+          </div>
+          <div class="field" id="rf-field-email">
+            <label>Email</label>
+            <input type="text" id="rf-email">
+            <div class="error-msg" id="rf-err-email" hidden></div>
+          </div>
+          <div class="field" id="rf-field-session">
+            <label>Session</label>
+            <select id="rf-session">
+              <option value="" disabled selected>Select a session…</option>
+              ${sessionOptionsHtml('')}
+            </select>
+            <div class="error-msg" id="rf-err-session" hidden></div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Register</button>
+        </form>
+      </div>
+    `;
+
+    document.getElementById('reg-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('rf-name').value;
+      const email = document.getElementById('rf-email').value;
+      const session = document.getElementById('rf-session').value;
+      const errors = validate(name, email, session);
+      showFormErrors('rf', errors);
+      if (Object.keys(errors).length) return;
+      try {
+        await addAttendee(name, email, session);
+        showError(null);
+      } catch (err) {
+        showError('Could not register: ' + err.message);
+        return;
+      }
+      e.target.reset();
+      document.getElementById('rf-session').selectedIndex = 0;
+      showFormErrors('rf', {});
+    });
+  }
+
+  // ---- Attendees page ----
+  function renderAttendees() {
+    const root = document.getElementById('view-attendees');
+    root.innerHTML = `
+      <div class="page-header">
+        <div>
+          <div class="eyebrow">Workshop Operations</div>
+          <h1 class="page-title">Attendees</h1>
+          <p class="page-subtitle">View, edit, and manage everyone who's signed up.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-heading-row">
+          <h2>All attendees</h2>
+          <div class="filter-row" id="attendees-filters">
+            ${['all', 'registered', 'checked-in', 'waitlist'].map(f => `
+              <button class="pill ${attendeesFilter === f ? 'active' : ''}" data-filter="${f}">
+                ${f === 'all' ? 'All' : STATUS_LABELS[f]}
+              </button>
+            `).join('')}
+          </div>
+        </div>
+        <div id="attendees-table"></div>
+      </div>
+    `;
+
+    document.getElementById('attendees-filters').addEventListener('click', (e) => {
+      const btn = e.target.closest('.pill');
+      if (!btn) return;
+      attendeesFilter = btn.dataset.filter;
+      editingId = null;
+      confirmDeleteId = null;
+      document.querySelectorAll('#attendees-filters .pill').forEach(p => {
+        p.classList.toggle('active', p.dataset.filter === attendeesFilter);
+      });
+      renderAttendeesTable();
+    });
+
+    renderAttendeesTable();
+  }
+
+  function renderAttendeesTable() {
+    const container = document.getElementById('attendees-table');
+    const filtered = attendeesFilter === 'all' ? attendees : attendees.filter(a => a.status === attendeesFilter);
+
+    if (!filtered.length) {
+      container.innerHTML = `<div class="empty-state">No attendees match this filter.</div>`;
+      return;
+    }
+
+    container.innerHTML = `
+      <table>
+        <thead><tr><th>Attendee</th><th>Session</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          ${filtered.map(a => `<tr id="row-${a.id}"></tr>`).join('')}
+        </tbody>
+      </table>
+    `;
+
+    filtered.forEach(a => {
+      const row = document.getElementById(`row-${a.id}`);
+      if (editingId === a.id) fillEditRow(row, a);
+      else if (confirmDeleteId === a.id) fillConfirmDeleteRow(row, a);
+      else fillViewRow(row, a);
+    });
+  }
+
+  function fillViewRow(row, a) {
+    row.innerHTML = `
+      <td><div class="cell-name">${escapeHtml(a.name)}</div><div class="cell-email">${escapeHtml(a.email)}</div></td>
+      <td>${escapeHtml(a.session)}</td>
+      <td>${statusBadge(a.status)}</td>
+      <td>
+        <div class="actions-cell">
+          <button class="btn-small btn-edit btn-edit-row">Edit</button>
+          <button class="btn-small btn-danger btn-delete-row">Delete</button>
+        </div>
+      </td>
+    `;
+    row.querySelector('.btn-edit-row').addEventListener('click', () => {
+      editingId = a.id;
+      renderAttendeesTable();
+    });
+    row.querySelector('.btn-delete-row').addEventListener('click', () => {
+      confirmDeleteId = a.id;
+      renderAttendeesTable();
+    });
+  }
+
+  function fillConfirmDeleteRow(row, a) {
+    row.innerHTML = `
+      <td colspan="2"><div class="cell-name">Remove ${escapeHtml(a.name)}?</div><div class="cell-email">This can't be undone.</div></td>
+      <td></td>
+      <td>
+        <div class="actions-cell">
+          <button class="btn-small btn-danger btn-confirm-delete">Delete</button>
+          <button class="btn-small btn-edit btn-cancel-delete">Cancel</button>
+        </div>
+      </td>
+    `;
+    row.querySelector('.btn-confirm-delete').addEventListener('click', async () => {
+      try {
+        await deleteAttendee(a.id);
+        showError(null);
+      } catch (err) {
+        showError('Could not delete attendee: ' + err.message);
+      }
+      confirmDeleteId = null;
+      renderAttendeesTable();
+    });
+    row.querySelector('.btn-cancel-delete').addEventListener('click', () => {
+      confirmDeleteId = null;
+      renderAttendeesTable();
+    });
+  }
+
+  function fillEditRow(row, a) {
+    const uid = a.id;
+    row.innerHTML = `
+      <td colspan="4">
+        <div class="edit-form">
+          <div class="field" id="ef-name-field-${uid}">
+            <label>Name</label>
+            <input type="text" id="ef-name-${uid}" value="${escapeAttr(a.name)}">
+            <div class="error-msg" id="ef-name-err-${uid}" hidden></div>
+          </div>
+          <div class="field" id="ef-email-field-${uid}">
+            <label>Email</label>
+            <input type="text" id="ef-email-${uid}" value="${escapeAttr(a.email)}">
+            <div class="error-msg" id="ef-email-err-${uid}" hidden></div>
+          </div>
+          <div class="field" id="ef-session-field-${uid}">
+            <label>Session</label>
+            <select id="ef-session-${uid}">${sessionOptionsHtml(a.session)}</select>
+            <div class="error-msg" id="ef-session-err-${uid}" hidden></div>
+          </div>
+          <div class="field">
+            <label>Status</label>
+            <select id="ef-status-${uid}">${statusOptionsHtml(a.status)}</select>
+          </div>
+          <div class="edit-actions">
+            <button class="btn-small btn-primary btn-save-edit">Save</button>
+            <button class="btn-small btn-edit btn-cancel-edit">Cancel</button>
+          </div>
+        </div>
+      </td>
+    `;
+
+    row.querySelector('.btn-save-edit').addEventListener('click', async () => {
+      const name = document.getElementById(`ef-name-${uid}`).value;
+      const email = document.getElementById(`ef-email-${uid}`).value;
+      const session = document.getElementById(`ef-session-${uid}`).value;
+      const status = document.getElementById(`ef-status-${uid}`).value;
+      const errors = validate(name, email, session);
+
+      ['name', 'email', 'session'].forEach(f => {
+        const field = document.getElementById(`ef-${f}-field-${uid}`);
+        const err = document.getElementById(`ef-${f}-err-${uid}`);
+        if (errors[f]) { field.classList.add('has-error'); err.textContent = errors[f]; err.hidden = false; }
+        else { field.classList.remove('has-error'); err.hidden = true; }
+      });
+      if (Object.keys(errors).length) return;
+
+      try {
+        await updateAttendee(uid, { name: name.trim(), email: email.trim(), session, status });
+        showError(null);
+      } catch (err) {
+        showError('Could not save changes: ' + err.message);
+        return;
+      }
+      editingId = null;
+      renderAttendeesTable();
+    });
+
+    row.querySelector('.btn-cancel-edit').addEventListener('click', () => {
+      editingId = null;
+      renderAttendeesTable();
+    });
+  }
+
+  // ---- Event day page ----
+  function renderEventDay() {
+    const root = document.getElementById('view-eventday');
+    root.innerHTML = `
+      <div class="page-header">
+        <div>
+          <div class="eyebrow">Workshop Operations</div>
+          <h1 class="page-title">Event day</h1>
+          <p class="page-subtitle">Check attendees in as they arrive.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-heading-row">
+          <h2>Arrivals</h2>
+          <div class="stat-note" id="eventday-summary"></div>
+        </div>
+        <div id="eventday-table"></div>
+      </div>
+    `;
+    renderEventDayTable();
+  }
+
+  function renderEventDayTable() {
+    const container = document.getElementById('eventday-table');
+    const summary = document.getElementById('eventday-summary');
+    const checkedIn = attendees.filter(a => a.status === 'checked-in').length;
+    summary.textContent = `${checkedIn} / ${attendees.length} checked in`;
+
+    if (!attendees.length) {
+      container.innerHTML = `<div class="empty-state">No attendees registered yet.</div>`;
+      return;
+    }
+
+    container.innerHTML = `
+      <table>
+        <thead><tr><th>Attendee</th><th>Session</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          ${attendees.map(a => `
+            <tr id="ed-row-${a.id}">
+              <td><div class="cell-name">${escapeHtml(a.name)}</div><div class="cell-email">${escapeHtml(a.email)}</div></td>
+              <td>${escapeHtml(a.session)}</td>
+              <td>${statusBadge(a.status)}</td>
+              <td>
+                ${a.status === 'checked-in'
+                  ? `<span class="stat-note">Checked in</span>`
+                  : `<button class="btn-small btn-checkin btn-checkin-row" data-id="${a.id}">Check in</button>`}
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+
+    container.querySelectorAll('.btn-checkin-row').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        try {
+          await updateAttendee(btn.dataset.id, { status: 'checked-in' });
+          showError(null);
+        } catch (err) {
+          showError('Could not check in attendee: ' + err.message);
+        }
+        renderEventDayTable();
+      });
+    });
+  }
+
+  // ---- Init ----
+  db.auth.onAuthStateChange((event, session) => {
+    currentUser = session ? session.user : null;
+    updateSidebarAuthUI();
+
+    if ((event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') && window.location.hash) {
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+
+    if (event === 'PASSWORD_RECOVERY') {
+      passwordRecoveryPending = true;
+      setView('signin');
+    } else if (event === 'INITIAL_SESSION') {
+      setView(currentUser ? 'dashboard' : 'signin');
+    } else if (event === 'SIGNED_IN') {
+      if (!passwordRecoveryPending) setView('dashboard');
+    } else if (event === 'SIGNED_OUT') {
+      setView('signin');
+    }
+  });
+</script>
+</body>
+</html>
