@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Event Registration</title>
+<style>
+  :root {
+    --bg: #f7f7f8;
+    --card-bg: #ffffff;
+    --border: #e0e0e3;
+    --text: #1c1c1e;
+    --muted: #6b6b70;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --error: #dc2626;
+    --danger: #dc2626;
+    --danger-hover: #b91c1c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 24px 16px 64px;
+  }
+  .container {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 1.5rem;
+    margin-bottom: 4px;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 24px;
+  }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+  .card h2 {
+    font-size: 1.05rem;
+    margin: 0 0 16px;
+  }
+  .field {
+    margin-bottom: 14px;
+  }
+  label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  input[type="text"],
+  select {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    background: #fff;
+    color: var(--text);
+  }
+  input[type="text"]:focus,
+  select:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .field.has-error input,
+  .field.has-error select {
+    border-color: var(--error);
+  }
+  .error-msg {
+    color: var(--error);
+    font-size: 0.78rem;
+    margin-top: 4px;
+  }
+  button {
+    cursor: pointer;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 10px 16px;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    width: 100%;
+  }
+  .btn-primary:hover { background: var(--accent-hover); }
+
+  .attendee-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .attendee-item {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+  .attendee-view {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .attendee-info .name {
+    font-weight: 600;
+  }
+  .attendee-info .email,
+  .attendee-info .session {
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  .attendee-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .btn-small {
+    background: #eef0f3;
+    color: var(--text);
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+  .btn-small:hover { background: #dfe2e6; }
+  .btn-danger {
+    background: #fdecec;
+    color: var(--danger);
+  }
+  .btn-danger:hover { background: #fbdada; }
+  .btn-save {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-save:hover { background: var(--accent-hover); }
+
+  .empty-state {
+    text-align: center;
+    color: var(--muted);
+    padding: 32px 0;
+    font-size: 0.9rem;
+  }
+
+  .edit-form .field { margin-bottom: 10px; }
+  .edit-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  @media (max-width: 480px) {
+    .attendee-view { flex-direction: column; }
+    .attendee-actions { align-self: flex-end; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Event Registration</h1>
+  <p class="subtitle">Register for a session below. Data is not saved — it resets on refresh.</p>
+
+  <div class="card">
+    <h2>Register</h2>
+    <form id="reg-form" novalidate>
+      <div class="field" id="field-name">
+        <label for="name">Name</label>
+        <input type="text" id="name" autocomplete="off">
+        <div class="error-msg" id="err-name" hidden></div>
+      </div>
+      <div class="field" id="field-email">
+        <label for="email">Email</label>
+        <input type="text" id="email" autocomplete="off">
+        <div class="error-msg" id="err-email" hidden></div>
+      </div>
+      <div class="field" id="field-session">
+        <label for="session">Session</label>
+        <select id="session">
+          <option value="" disabled selected>Select a session…</option>
+        </select>
+        <div class="error-msg" id="err-session" hidden></div>
+      </div>
+      <button type="submit" class="btn-primary">Register</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Attendees</h2>
+    <ul class="attendee-list" id="attendee-list"></ul>
+    <div class="empty-state" id="empty-state" hidden>No attendees registered yet.</div>
+  </div>
+</div>
+
+<script>
+  const SESSIONS = [
+    "Keynote: The Future of Work",
+    "Workshop: Design Systems 101",
+    "Panel: Building in Public",
+    "Breakout: AI in Practice"
+  ];
+
+  let attendees = [
+    { id: crypto.randomUUID(), name: "Ava Thompson", email: "ava.thompson@example.com", session: SESSIONS[0] },
+    { id: crypto.randomUUID(), name: "Marcus Lee", email: "marcus.lee@example.com", session: SESSIONS[1] },
+    { id: crypto.randomUUID(), name: "Priya Nair", email: "priya.nair@example.com", session: SESSIONS[3] }
+  ];
+
+  let editingId = null;
+  let confirmDeleteId = null;
+
+  const sessionSelect = document.getElementById('session');
+  SESSIONS.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s;
+    opt.textContent = s;
+    sessionSelect.appendChild(opt);
+  });
+
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  function validate(name, email, session) {
+    const errors = {};
+    if (!name.trim()) errors.name = "Name is required.";
+    if (!email.trim()) errors.email = "Email is required.";
+    else if (!EMAIL_RE.test(email.trim())) errors.email = "Enter a valid email address.";
+    if (!session) errors.session = "Please select a session.";
+    return errors;
+  }
+
+  function clearFieldErrors(prefix) {
+    ['name', 'email', 'session'].forEach(f => {
+      document.getElementById(`${prefix}${f}-field`)?.classList.remove('has-error');
+    });
+  }
+
+  // --- Registration form handling ---
+  const form = document.getElementById('reg-form');
+  const nameInput = document.getElementById('name');
+  const emailInput = document.getElementById('email');
+
+  function showFormErrors(errors) {
+    ['name', 'email', 'session'].forEach(f => {
+      const field = document.getElementById(`field-${f}`);
+      const err = document.getElementById(`err-${f}`);
+      if (errors[f]) {
+        field.classList.add('has-error');
+        err.textContent = errors[f];
+        err.hidden = false;
+      } else {
+        field.classList.remove('has-error');
+        err.hidden = true;
+      }
+    });
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = nameInput.value;
+    const email = emailInput.value;
+    const session = sessionSelect.value;
+
+    const errors = validate(name, email, session);
+    showFormErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
+    attendees.push({ id: crypto.randomUUID(), name: name.trim(), email: email.trim(), session });
+    form.reset();
+    sessionSelect.selectedIndex = 0;
+    showFormErrors({});
+    render();
+  });
+
+  // --- Attendee list rendering ---
+  const listEl = document.getElementById('attendee-list');
+  const emptyEl = document.getElementById('empty-state');
+
+  function render() {
+    listEl.innerHTML = '';
+    if (attendees.length === 0) {
+      emptyEl.hidden = false;
+      return;
+    }
+    emptyEl.hidden = true;
+
+    attendees.forEach(a => {
+      const li = document.createElement('li');
+      li.className = 'attendee-item';
+
+      if (editingId === a.id) {
+        li.appendChild(renderEditForm(a));
+      } else if (confirmDeleteId === a.id) {
+        li.appendChild(renderConfirmDelete(a));
+      } else {
+        li.appendChild(renderView(a));
+      }
+      listEl.appendChild(li);
+    });
+  }
+
+  function renderView(a) {
+    const wrap = document.createElement('div');
+    wrap.className = 'attendee-view';
+    wrap.innerHTML = `
+      <div class="attendee-info">
+        <div class="name">${escapeHtml(a.name)}</div>
+        <div class="email">${escapeHtml(a.email)}</div>
+        <div class="session">${escapeHtml(a.session)}</div>
+      </div>
+      <div class="attendee-actions">
+        <button class="btn-small btn-edit">Edit</button>
+        <button class="btn-small btn-danger btn-delete">Delete</button>
+      </div>
+    `;
+    wrap.querySelector('.btn-edit').addEventListener('click', () => {
+      editingId = a.id;
+      render();
+    });
+    wrap.querySelector('.btn-delete').addEventListener('click', () => {
+      confirmDeleteId = a.id;
+      render();
+    });
+    return wrap;
+  }
+
+  function renderConfirmDelete(a) {
+    const wrap = document.createElement('div');
+    wrap.className = 'attendee-view';
+    wrap.innerHTML = `
+      <div class="attendee-info">
+        <div class="name">Remove ${escapeHtml(a.name)}?</div>
+        <div class="email">This can't be undone.</div>
+      </div>
+      <div class="attendee-actions">
+        <button class="btn-small btn-danger btn-confirm-delete">Delete</button>
+        <button class="btn-small btn-cancel-delete">Cancel</button>
+      </div>
+    `;
+    wrap.querySelector('.btn-confirm-delete').addEventListener('click', () => {
+      attendees = attendees.filter(x => x.id !== a.id);
+      confirmDeleteId = null;
+      render();
+    });
+    wrap.querySelector('.btn-cancel-delete').addEventListener('click', () => {
+      confirmDeleteId = null;
+      render();
+    });
+    return wrap;
+  }
+
+  function renderEditForm(a) {
+    const wrap = document.createElement('div');
+    wrap.className = 'edit-form';
+
+    const uid = a.id;
+    wrap.innerHTML = `
+      <div class="field" id="ef-name-field-${uid}">
+        <label>Name</label>
+        <input type="text" id="ef-name-${uid}" value="${escapeAttr(a.name)}">
+        <div class="error-msg" id="ef-name-err-${uid}" hidden></div>
+      </div>
+      <div class="field" id="ef-email-field-${uid}">
+        <label>Email</label>
+        <input type="text" id="ef-email-${uid}" value="${escapeAttr(a.email)}">
+        <div class="error-msg" id="ef-email-err-${uid}" hidden></div>
+      </div>
+      <div class="field" id="ef-session-field-${uid}">
+        <label>Session</label>
+        <select id="ef-session-${uid}">
+          ${SESSIONS.map(s => `<option value="${escapeAttr(s)}" ${s === a.session ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('')}
+        </select>
+        <div class="error-msg" id="ef-session-err-${uid}" hidden></div>
+      </div>
+      <div class="edit-actions">
+        <button class="btn-small btn-save">Save</button>
+        <button class="btn-small btn-cancel" type="button">Cancel</button>
+      </div>
+    `;
+
+    wrap.querySelector('.btn-save').addEventListener('click', () => {
+      const name = wrap.querySelector(`#ef-name-${uid}`).value;
+      const email = wrap.querySelector(`#ef-email-${uid}`).value;
+      const session = wrap.querySelector(`#ef-session-${uid}`).value;
+      const errors = validate(name, email, session);
+
+      ['name', 'email', 'session'].forEach(f => {
+        const field = wrap.querySelector(`#ef-${f}-field-${uid}`);
+        const err = wrap.querySelector(`#ef-${f}-err-${uid}`);
+        if (errors[f]) {
+          field.classList.add('has-error');
+          err.textContent = errors[f];
+          err.hidden = false;
+        } else {
+          field.classList.remove('has-error');
+          err.hidden = true;
+        }
+      });
+
+      if (Object.keys(errors).length > 0) return;
+
+      const attendee = attendees.find(x => x.id === uid);
+      attendee.name = name.trim();
+      attendee.email = email.trim();
+      attendee.session = session;
+      editingId = null;
+      render();
+    });
+
+    wrap.querySelector('.btn-cancel').addEventListener('click', () => {
+      editingId = null;
+      render();
+    });
+
+    return wrap;
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+  function escapeAttr(str) {
+    return escapeHtml(str).replace(/"/g, '&quot;');
+  }
+
+  render();
+</script>
+</body>
+</html>
